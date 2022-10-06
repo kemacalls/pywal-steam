@@ -1,8 +1,6 @@
 import os
 from PIL import ImageColor
 
-USER_HOME = os.path.expanduser('~')
-COLOR_FILE = USER_HOME + '/.cache/wal/colors.sh'
 COLOR_DICT = {
     'background'  : '',
     'foreground'  : '',
@@ -25,10 +23,10 @@ COLOR_DICT = {
     'color15'     : '',   
 }
 
-def parse_file() -> tuple:
+def parse_file(path) -> tuple:
     '''gets hex & rgba values from pywal's cache'''
     
-    with open(COLOR_FILE, 'r') as f:
+    with open(path + '/colors.sh', 'r') as f:
         contents = f.readlines()
 
     # shorten lines to just hex codes
