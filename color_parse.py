@@ -52,4 +52,4 @@ def parse_file(path) -> tuple:
 
     rgb_colors_dict = dict(zip(COLOR_DICT.keys(), colors))
 
-    return hex_colors_dict, rgba_colors_dict, rgb_colors_dict,
+    return hex_colors_dict, rgba_colors_dict, rgb_colors_dict

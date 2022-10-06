@@ -18,9 +18,6 @@ for k, v in paths_config.items():
     if v != 'default':
         DIR_DICT[k] = v
 
-def main():
-    validate_paths()
-
 def define_custom_dir(dir, default) -> str:
     '''let user create custom directories'''
 
@@ -42,7 +39,7 @@ def define_custom_dir(dir, default) -> str:
 
 def validate_paths() -> dict:
     '''ensure all paths are present'''
-    
+
     try:
         for k, v in DIR_DICT.items():
             if os.path.exists(v):
@@ -53,7 +50,3 @@ def validate_paths() -> dict:
     except Exception as e:
         print(f"path checks failed!\n{e}")
         sys.exit(0)
-        
-
-if __name__ == "__main__":
-    main()
