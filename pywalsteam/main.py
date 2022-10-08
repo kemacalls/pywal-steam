@@ -7,7 +7,8 @@ from rich import print
 def main():
     valid_dirs = validate_paths()
     _, rgba_dict, _ = parse_file(valid_dirs["pywal"])
-    color_swap_template(rgba_dict, valid_dirs["dracula"])
+    pdt = parse_template(rgba_dict, valid_dirs["dracula"])
+    preview_colorset(pdt)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 import os, sys
+import yaml
+import re
+import math
 from rich import print
+from PIL import Image, ImageDraw, ImageColor
 
 # so far these are mapped for the beginning values in steam.styles
 # next will be mapping any lines with // comments
@@ -14,84 +18,78 @@ from rich import print
 # maybe putting color mappings in a template yaml for easier readability & changing???
 # will look at this later ig
 
+class ColorMap():
+    def __init__(self, rgba_dict):
+        self.bg = rgba_dict["background"]
+        self.fg = rgba_dict["foreground"]
+        self.black = rgba_dict["color0"]
+        self.blue = rgba_dict["color4"]
+        self.green = rgba_dict["color2"]
+        self.cyan = rgba_dict["color6"]
+        self.red = rgba_dict["color1"]
+        self.purple = rgba_dict["color5"]
+        self.yellow = rgba_dict["color3"]
+        self.lblue = rgba_dict["color12"]
+        self.lgreen = rgba_dict["color10"]
+        self.lcyan = rgba_dict["color14"]
+        self.lred = rgba_dict["color9"]
+        self.lpurple = rgba_dict["color14"]
+        self.lyellow = rgba_dict["color11"]
+        self.lgray = rgba_dict["color7"]
 
-def color_swap_template(rgba_dict, path):
-    """basically a mini-main for mapping & altering template colors"""
-
-    # depending upon how many values end up being changed
-    # dealing with color mappings might get unruly quickly
-    # mapping them separately should allow for templating later
-    map_background = rgba_dict["background"]
-    map_foreground = rgba_dict["foreground"]
-    map_black = rgba_dict["color0"]
-    map_blue = rgba_dict["color4"]
-    map_green = rgba_dict["color2"]
-    map_cyan = rgba_dict["color6"]
-    map_red = rgba_dict["color1"]
-    map_purple = rgba_dict["color5"]
-    map_yellow = rgba_dict["color3"]
-    map_lblue = rgba_dict["color12"]
-    map_lgreen = rgba_dict["color10"]
-    map_lcyan = rgba_dict["color14"]
-    map_lred = rgba_dict["color9"]
-    map_lpurple = rgba_dict["color13"]
-    map_lyellow = rgba_dict["color11"]
-    map_lgray = rgba_dict["color7"]
-
-    # changes some things for sure
-    drac_color_dict = {
-        "draculaSelection": map_blue,
-        "draculaAccent": map_lcyan,
-        "notificationColor": map_lpurple,
-        "draculaCyan": map_cyan,
-        "draculaGreen": map_lgreen,
-        "draculaOrange": map_yellow,
-        "draculaPink": map_lred,
-        "draculaPurple": map_purple,
-        "draculaRed": map_red,
-        "draculaYellow": map_lyellow,
-    }
-
-    # not noticing a lot of changes with these
-    general_color_dict = {
-        "black": map_background,
-        "dark": color_mod(map_background, intc=10),
-        "almostBlack": color_mod(map_background, intc=5),
-        "almostBlackTrans": color_mod(map_background, intc=10, alphac=-15),
-        "white": map_foreground,
-        "grey": color_mod(map_foreground, perc=-15),
-        "none": (0, 0, 0, 0),
-        "yellow": map_lyellow,
-        "offwhite": color_mod(map_foreground, perc=-10),
-        "dullgreen": map_green,
-        "maize": map_yellow,
-        "red": map_lred,
-        "darkblue": map_blue,
-        "blue": map_lblue,
-        "darkred": map_red,
-        "darkpurple": map_purple,
-    }
-
-    no_equals_color_dict = {
-        "dark_blue": map_background,
-        "med_blue": map_background,
-        "bg_blue": map_background,
-    }
-
-    drac_list, general_list = gen_lines_list(drac_color_dict), gen_lines_list(
-        general_color_dict
-    )
-
+def parse_template(rgba_dict, path):
+    """turn color values from steam.styles into a dictionary"""
     with open(path + "/resource/styles/steam.styles", "r") as f:
         template = f.readlines()
+    
+    parsed_template = list()
+    for i in template:
+        # some entries are formatted without spaces
+        val = re.findall('[A-z].+=[\s|"]\d.+\d.+\d.+\d.+["]',i)
+        if len(val) > 0:
+            parsed_template.append(val)
+            continue
+        # other entries are formatted with many spaces
+        val2 = re.findall('[A-z]+\s+=\s+["]\d.+\d.+\d.+\d.+["]\\n',i)
+        if len(val2) > 0:
+            parsed_template.append(val2)
+ 
+    parsed_template_dict = dict()
+    for i in parsed_template:
+        items = i[0].replace('"','').replace("\t",' ').strip("\n").split("=")
+        key = items[0].strip()
+        value = items[1].strip().split(' ')
+        value = [ i for i in value if i.isdigit() ]
+        parsed_template_dict[key] = [ int(i) for i in value ]
 
-    template = modify_template(template, drac_list, (0, 23))
-    template = modify_template(template, general_list, (24, 45))
+    return parsed_template_dict
 
-    # write changes
-    with open(path + "/resource/styles/steam.styles", "w") as f:
-        f.writelines(template)
+def preview_colorset(template_color_dict):
+    """outputs an table image of scraped RGBA values (in RGB)"""
+    color_dict = dict()
+    for i, (k,v) in enumerate(template_color_dict.items()):
+        color_dict[k] = ImageColor.getrgb("rgb("+str(v[0:3]).strip("[]").replace(" ","")+")")
 
+    max_per_col = 20
+    col_len = 200
+    w = round(len(color_dict) / 20) * col_len
+    h = 20 * 21
+
+    # making a transparent document
+    img = Image.new("RGBA", (w, h))
+    draw = ImageDraw.Draw(img)
+
+    for i, (k, v) in enumerate(color_dict.items()):
+        a, b, c, d, = 0, 0 + (i+1)%max_per_col * 20, 20, 20 + (i+1)%max_per_col * 20 
+        # when reach max per column, create new column
+        if (i/max_per_col) >= 1:
+            a, c = a + (col_len * math.floor(i/max_per_col)), c + (col_len * math.floor(i/max_per_col))
+        draw.rectangle((a,b,c,d), fill = v)
+        # drop shadow for readability
+        draw.text((a+31,d-16), k, fill="#00000088")
+        draw.text((a+30,d-17), k, fill="#ffffff")
+
+    img.save("test.png")
 
 def gen_lines_list(color_dict):
     """transform color dict into writeable template lines"""

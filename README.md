@@ -19,3 +19,7 @@ still being actively developed
 7. multiple color configurations as args (--preset1, --preset2, etc)
 8. maybe wal -> dracula easy templating via yaml idk
 9. ???
+
+## current mapping
+
+![test.png](test.png)
