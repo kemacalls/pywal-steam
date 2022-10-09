@@ -9,9 +9,9 @@ this is intended to be a replacement for the no-longer-supported wal_steam proje
 3. ~~persistence vis config file~~  
 4. ~~parse colors from .cache/wal/wal.sh~~  
 5. ~~read and write changes to template file~~
-6. map out template files for more substantial color changes
-  a. parse and map steam.styles
-  b. parse and map css files
+6. map out template files for more substantial color changes  
+  a. parse and map steam.styles  
+  b. parse and map css files  
 
 
 ## current mapping (steam.styles)
